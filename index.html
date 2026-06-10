@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Latihan Digital Guru Pahang</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom CSS for Skeuomorphism Look */
+        body {
+            background-color: #E6EBF0;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+        .skeuo-bg {
+            background-color: #E6EBF0;
+        }
+        .skeuo-panel {
+            background: linear-gradient(135deg, #f6f8fb, #d8dfe9);
+            box-shadow: 10px 10px 20px #c2c9d2, -10px -10px 20px #ffffff;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .skeuo-inset {
+            background: #E6EBF0;
+            box-shadow: inset 6px 6px 12px #c2c9d2, inset -6px -6px 12px #ffffff;
+            border-radius: 12px;
+        }
+        .skeuo-button {
+            background: linear-gradient(135deg, #f6f8fb, #d8dfe9);
+            box-shadow: 5px 5px 10px #c2c9d2, -5px -5px 10px #ffffff;
+            border-radius: 12px;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+        }
+        .skeuo-button:active {
+            box-shadow: inset 4px 4px 8px #c2c9d2, inset -4px -4px 8px #ffffff;
+            background: #E6EBF0;
+        }
+        .skeuo-button-primary {
+            background: linear-gradient(135deg, #4b6cb7, #182848);
+            box-shadow: 5px 5px 10px #c2c9d2, -5px -5px 10px #ffffff;
+            color: white;
+            border: 1px solid #5a7ec4;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .skeuo-button-primary:active {
+            box-shadow: inset 4px 4px 8px rgba(0,0,0,0.5), inset -4px -4px 8px rgba(255,255,255,0.2);
+        }
+        .skeuo-button-primary:hover {
+            transform: scale(1.05);
+        }
+        .skeuo-table th {
+            background: #d8dfe9;
+            box-shadow: inset 1px 1px 2px #ffffff, inset -1px -1px 2px #c2c9d2;
+            border-bottom: 2px solid #c2c9d2;
+        }
+        
+        /* Hide scrollbar for a cleaner inset look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 p-4 md:p-8">
+
+    <!-- Header Section -->
+    <div class="skeuo-panel p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-5">
+            <div class="w-16 h-16 rounded-2xl skeuo-inset flex items-center justify-center text-blue-600">
+                <i data-lucide="monitor-play" class="w-8 h-8"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 uppercase tracking-tight">
+                    Dashboard Latihan Digital
+                </h1>
+                <p class="text-slate-500 font-medium mt-1">Guru-guru Negeri Pahang</p>
+            </div>
+        </div>
+        
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLScomOHO8AuIOi8zwogQdx_PH01ToDnTttrHHJxGzWyKbyJlMg/viewform" 
+           target="_blank" 
+           rel="noopener noreferrer"
+           class="skeuo-button-primary px-6 py-3 flex items-center gap-2 rounded-xl font-bold">
+            <span>Daftar Latihan</span>
+            <i data-lucide="external-link" class="w-5 h-5"></i>
+        </a>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+        <i data-lucide="refresh-cw" class="animate-spin text-blue-500 mb-4 w-10 h-10"></i>
+        <p class="text-slate-500 font-semibold text-lg animate-pulse">Memuat turun data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="skeuo-panel p-8 text-center text-red-500 font-bold mb-8 hidden">
+        <span id="error-message">Gagal memuat turun data. Sila pastikan pautan boleh diakses.</span>
+        <button onclick="fetchData()" class="block mx-auto mt-4 skeuo-button px-6 py-2 text-slate-700">Cuba Semula</button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="hidden flex-col xl:flex-row gap-8">
+        
+        <!-- Left Sidebar: Filters -->
+        <div class="w-full xl:w-1/4 flex flex-col gap-6">
+            <div class="skeuo-panel p-6">
+                <div class="flex items-center gap-2 mb-6 text-slate-700">
+                    <i data-lucide="filter" class="w-5 h-5"></i>
+                    <h2 class="text-xl font-bold">Penapis Data</h2>
+                </div>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">PPD</label>
+                        <select id="filter-ppd" class="w-full skeuo-inset px-4 py-3 text-slate-700 outline-none focus:ring-2 ring-blue-400/50">
+                            <option value="">Semua PPD</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">Tempat Bertugas</label>
+                        <select id="filter-tempat" class="w-full skeuo-inset px-4 py-3 text-slate-700 outline-none focus:ring-2 ring-blue-400/50">
+                            <option value="">Semua Tempat</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">Latihan Diterima</label>
+                        <select id="filter-latihan" class="w-full skeuo-inset px-4 py-3 text-slate-700 outline-none focus:ring-2 ring-blue-400/50">
+                            <option value="">Semua Latihan</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">Tarikh Mula Latihan</label>
+                        <input type="date" id="filter-date-from" class="w-full skeuo-inset px-4 py-3 text-slate-700 outline-none focus:ring-2 ring-blue-400/50" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">Tarikh Tamat Latihan</label>
+                        <input type="date" id="filter-date-to" class="w-full skeuo-inset px-4 py-3 text-slate-700 outline-none focus:ring-2 ring-blue-400/50" />
+                    </div>
+
+                    <button id="btn-reset-filters" class="w-full mt-4 skeuo-button py-3 text-red-500 font-bold">
+                        Set Semula Penapis
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Main Content: Bento Layout -->
+        <div class="w-full xl:w-3/4 flex flex-col gap-6">
+            
+            <!-- Scorecards Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
+                <div class="skeuo-panel p-5 flex flex-col items-center justify-center text-center">
+                    <i data-lucide="map" class="text-emerald-600 mb-2 w-7 h-7"></i>
+                    <h3 id="stat-daerah" class="text-3xl font-black text-slate-800">0</h3>
+                    <p class="text-xs uppercase font-bold text-slate-500 mt-1">Bil. Daerah</p>
+                </div>
+                <div class="skeuo-panel p-5 flex flex-col items-center justify-center text-center">
+                    <i data-lucide="school" class="text-orange-500 mb-2 w-7 h-7"></i>
+                    <h3 id="stat-sekolah" class="text-3xl font-black text-slate-800">0</h3>
+                    <p class="text-xs uppercase font-bold text-slate-500 mt-1">Bil. Sekolah</p>
+                </div>
+                <div class="skeuo-panel p-5 flex flex-col items-center justify-center text-center">
+                    <i data-lucide="monitor-play" class="text-blue-500 mb-2 w-7 h-7"></i>
+                    <h3 id="stat-gurustem" class="text-3xl font-black text-slate-800">0</h3>
+                    <p class="text-xs uppercase font-bold text-slate-500 mt-1">Guru STEM</p>
+                </div>
+                <div class="skeuo-panel p-5 flex flex-col items-center justify-center text-center">
+                    <i data-lucide="book-open" class="text-purple-500 mb-2 w-7 h-7"></i>
+                    <h3 id="stat-gurubukanstem" class="text-3xl font-black text-slate-800">0</h3>
+                    <p class="text-xs uppercase font-bold text-slate-500 mt-1">Guru Bukan STEM</p>
+                </div>
+                <div class="skeuo-panel p-5 col-span-2 lg:col-span-1 flex flex-col items-center justify-center text-center bg-gradient-to-br from-blue-50 to-slate-100">
+                    <i data-lucide="users" class="text-indigo-600 mb-2 w-7 h-7"></i>
+                    <h3 id="stat-jumlahguru" class="text-3xl font-black text-slate-800">0</h3>
+                    <p class="text-xs uppercase font-bold text-slate-500 mt-1">Jumlah Guru</p>
+                </div>
+            </div>
+
+            <!-- Data Table Section -->
+            <div class="skeuo-panel flex-grow flex flex-col overflow-hidden">
+                <div class="p-5 border-b border-white/40 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h2 class="text-xl font-bold text-slate-800">Senarai Maklumat Guru</h2>
+                    <button id="btn-download" class="skeuo-button px-5 py-2.5 flex items-center gap-2 text-sm text-slate-700 font-medium">
+                        <i data-lucide="download" class="text-green-600 w-4 h-4"></i>
+                        Muat Turun Excel
+                    </button>
+                </div>
+                
+                <div class="p-5 overflow-auto flex-grow">
+                    <div class="skeuo-inset overflow-x-auto rounded-xl max-h-[500px] no-scrollbar">
+                        <table class="w-full text-left border-collapse skeuo-table whitespace-nowrap">
+                            <thead class="sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold text-slate-700 text-sm">DAERAH (PPD)</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700 text-sm">NAMA SEKOLAH</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700 text-sm">NAMA GURU</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700 text-sm">LATIHAN DITERIMA</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700 text-sm">STATUS GURU</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Global State
+        let globalData = [];
+        let filteredData = [];
+
+        // DOM Elements
+        const elLoading = document.getElementById('loading-state');
+        const elError = document.getElementById('error-state');
+        const elMain = document.getElementById('main-content');
+        const elTableBody = document.getElementById('table-body');
+        
+        // Filter Elements
+        const fPPD = document.getElementById('filter-ppd');
+        const fTempat = document.getElementById('filter-tempat');
+        const fLatihan = document.getElementById('filter-latihan');
+        const fDateFrom = document.getElementById('filter-date-from');
+        const fDateTo = document.getElementById('filter-date-to');
+        const btnReset = document.getElementById('btn-reset-filters');
+        const btnDownload = document.getElementById('btn-download');
+
+        // CSV Parser
+        const parseCSV = (str) => {
+            const arr = [];
+            let quote = false;
+            let row = 0;
+            let col = 0;
+            
+            for (let c = 0; c < str.length; c++) {
+                let cc = str[c], nc = str[c+1];
+                arr[row] = arr[row] || [];
+                arr[row][col] = arr[row][col] || '';
+
+                if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+                if (cc == '"') { quote = !quote; continue; }
+                if (cc == ',' && !quote) { ++col; continue; }
+                if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+                if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+                if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+                
+                arr[row][col] += cc;
+            }
+            return arr;
+        };
+
+        // Standardize Date
+        const standardizeDate = (dateStr) => {
+            if (!dateStr) return null;
+            const parts = dateStr.trim().split(/[-/]/);
+            if (parts.length === 3) {
+                if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return null;
+        };
+
+        // Fetch Data
+        async function fetchData() {
+            elLoading.style.display = 'flex';
+            elError.style.display = 'none';
+            elMain.style.display = 'none';
+
+            try {
+                const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQefMrCzJoj8Zh9tteL2auTUk7uMRiEa9FQdmd4iW2_DVsiDn6Z53zTKD2G1Oa5tXqbQ9ZzrRvpcF2W/pub?output=csv');
+                const csvText = await response.text();
+                const rawData = parseCSV(csvText);
+                
+                const headers = rawData[0].map(h => h.trim());
+                globalData = rawData.slice(1).filter(row => row.length === headers.length && row[0]).map(row => {
+                    let obj = {};
+                    headers.forEach((header, i) => {
+                        obj[header] = row[i]?.trim() || '';
+                    });
+                    return obj;
+                });
+                
+                elLoading.style.display = 'none';
+                elMain.style.display = 'flex';
+                
+                populateFilterOptions();
+                applyFilters();
+
+            } catch (err) {
+                elLoading.style.display = 'none';
+                elError.style.display = 'block';
+                console.error(err);
+            }
+        }
+
+        // Populate Dropdowns
+        function populateFilterOptions() {
+            const setPPD = new Set();
+            const setTempat = new Set();
+            const setLatihan = new Set();
+
+            globalData.forEach(item => {
+                if(item['PPD']) setPPD.add(item['PPD']);
+                if(item['TEMPAT BERTUGAS']) setTempat.add(item['TEMPAT BERTUGAS']);
+                if(item['LATIHAN DITERIMA']) setLatihan.add(item['LATIHAN DITERIMA']);
+            });
+
+            const fillSelect = (selectEl, optionsSet) => {
+                const options = Array.from(optionsSet).sort();
+                options.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt;
+                    el.textContent = opt;
+                    selectEl.appendChild(el);
+                });
+            };
+
+            fillSelect(fPPD, setPPD);
+            fillSelect(fTempat, setTempat);
+            fillSelect(fLatihan, setLatihan);
+        }
+
+        // Apply Filters logic
+        function applyFilters() {
+            const valPPD = fPPD.value;
+            const valTempat = fTempat.value;
+            const valLatihan = fLatihan.value;
+            const valDateFrom = fDateFrom.value;
+            const valDateTo = fDateTo.value;
+
+            filteredData = globalData.filter(item => {
+                const matchPPD = valPPD === '' || item['PPD'] === valPPD;
+                const matchTempat = valTempat === '' || item['TEMPAT BERTUGAS'] === valTempat;
+                const matchLatihan = valLatihan === '' || item['LATIHAN DITERIMA'] === valLatihan;
+                
+                let matchDate = true;
+                if (valDateFrom || valDateTo) {
+                    const itemMula = standardizeDate(item['TARIKH LATIHAN MULA']);
+                    const itemTamat = standardizeDate(item['TARIKH LATIHAN TAMAT']);
+                    
+                    if (valDateFrom && valDateTo) {
+                        matchDate = (itemMula >= valDateFrom && itemMula <= valDateTo) || 
+                                    (itemTamat >= valDateFrom && itemTamat <= valDateTo) || 
+                                    (itemMula <= valDateFrom && itemTamat >= valDateTo);
+                    } else if (valDateFrom) {
+                        matchDate = itemTamat >= valDateFrom;
+                    } else if (valDateTo) {
+                        matchDate = itemMula <= valDateTo;
+                    }
+                }
+
+                return matchPPD && matchTempat && matchLatihan && matchDate;
+            });
+
+            updateScorecards();
+            updateTable();
+        }
+
+        // Update Scorecards
+        function updateScorecards() {
+            const setDaerah = new Set();
+            const setSekolah = new Set();
+            let guruStem = 0;
+            let guruBukanStem = 0;
+
+            filteredData.forEach(d => {
+                if(d['PPD']) setDaerah.add(d['PPD']);
+                if(d['NAMA INSTITUSI BEKERJA (HURUF BESAR)']) setSekolah.add(d['NAMA INSTITUSI BEKERJA (HURUF BESAR)']);
+                
+                const status = (d['STATUS GURU'] || '').toLowerCase();
+                if (status.includes('stem') && !status.includes('bukan')) {
+                    guruStem++;
+                }
+                if (status.includes('bukan stem')) {
+                    guruBukanStem++;
+                }
+            });
+
+            document.getElementById('stat-daerah').textContent = setDaerah.size;
+            document.getElementById('stat-sekolah').textContent = setSekolah.size;
+            document.getElementById('stat-gurustem').textContent = guruStem;
+            document.getElementById('stat-gurubukanstem').textContent = guruBukanStem;
+            document.getElementById('stat-jumlahguru').textContent = filteredData.length;
+        }
+
+        // Update Table
+        function updateTable() {
+            elTableBody.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                elTableBody.innerHTML = `
+                    <tr>
+                        <td colSpan="5" class="px-4 py-12 text-center text-slate-500 font-medium">
+                            Tiada rekod dijumpai berdasarkan penapis semasa.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Create fragment for performance
+            const fragment = document.createDocumentFragment();
+
+            filteredData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-200/50 hover:bg-white/30 transition-colors";
+                
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-sm text-slate-600">${row['PPD'] || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-slate-600">${row['NAMA INSTITUSI BEKERJA (HURUF BESAR)'] || '-'}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-slate-800">${row['NAMA PENUH'] || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-slate-600">
+                        <span class="inline-block px-2 py-1 rounded bg-blue-100/50 text-blue-800 text-xs border border-blue-200">
+                            ${row['LATIHAN DITERIMA'] || '-'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-slate-600">${row['STATUS GURU'] || '-'}</td>
+                `;
+                fragment.appendChild(tr);
+            });
+
+            elTableBody.appendChild(fragment);
+        }
+
+        // Export Excel
+        function downloadExcel() {
+            const headers = ['DAERAH (PPD)', 'NAMA SEKOLAH', 'NAMA GURU', 'LATIHAN DITERIMA', 'STATUS GURU'];
+            const rows = filteredData.map(d => [
+                `"${d['PPD'] || '-'}"`,
+                `"${d['NAMA INSTITUSI BEKERJA (HURUF BESAR)'] || '-'}"`,
+                `"${d['NAMA PENUH'] || '-'}"`,
+                `"${d['LATIHAN DITERIMA'] || '-'}"`,
+                `"${d['STATUS GURU'] || '-'}"`
+            ]);
+            
+            const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.join(','))].join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Laporan_Latihan_Digital_Guru_Pahang.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Event Listeners
+        fPPD.addEventListener('change', applyFilters);
+        fTempat.addEventListener('change', applyFilters);
+        fLatihan.addEventListener('change', applyFilters);
+        fDateFrom.addEventListener('change', applyFilters);
+        fDateTo.addEventListener('change', applyFilters);
+
+        btnReset.addEventListener('click', () => {
+            fPPD.value = '';
+            fTempat.value = '';
+            fLatihan.value = '';
+            fDateFrom.value = '';
+            fDateTo.value = '';
+            applyFilters();
+        });
+
+        btnDownload.addEventListener('click', downloadExcel);
+
+        // Start App
+        document.addEventListener('DOMContentLoaded', fetchData);
+
+    </script>
+</body>
+</html>
